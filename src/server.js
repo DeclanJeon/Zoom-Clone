@@ -13,7 +13,7 @@ app.get("/", (req, res) => res.render("home"));
 app.get("/video", (req, res) => res.render("video"));
 //app.get("/*", (req, res) => res.redirect("/"));
 
-const handleListen = () => console.log("Listening on http://localhost:3000");
+const handleListen = () => console.log("Listening on http://localhost:3001");
 
 const httpServer = http.createServer(app);
 const wsServer = new Server(httpServer, {
@@ -24,6 +24,23 @@ const wsServer = new Server(httpServer, {
 });
 instrument(wsServer, {
     auth: false,
+});
+
+// WebRTC
+wsServer.on("connection", (socket) => {
+    socket.on("join_room", (roomName) => {
+        socket.join(roomName);
+        socket.to(roomName).emit("welcome");
+    });
+    socket.on("offer", (offer, roomName) => {
+        socket.to(roomName).emit("offer", offer);
+    });
+    socket.on("answer", (answer, roomName) => {
+        socket.to(roomName).emit("answer", answer);
+    });
+    socket.on("ice", (ice, roomName) => {
+        socket.to(roomName).emit("ice", ice);
+    });
 });
 
 function publicRooms() {
@@ -79,7 +96,7 @@ wsServer.on("connection", (socket) => {
  * function onSocketClose() {
     console.log("Disconnected from the Browser");
 }
- * const wss = new WebSocket.Server({ server });
+ * const wss = new WebSocket.Server({ server });f
  * const sockets = [];
 
 wss.on("connection", (socket) => {
